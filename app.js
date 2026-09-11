@@ -32,6 +32,7 @@
     backModes: document.querySelectorAll('input[name="back-mode"]'),
   };
   let currentPdfUrl = null;
+  let currentPdfBlob = null;
 
   function setStatus(message, type = "") {
     ui.status.textContent = message;
@@ -42,6 +43,7 @@
     if (currentPdfUrl) {
       URL.revokeObjectURL(currentPdfUrl);
       currentPdfUrl = null;
+      currentPdfBlob = null;
       ui.download.hidden = true;
     }
     ["front", "back"].forEach((side) => {
@@ -217,10 +219,10 @@
       }
 
       if (currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
-      currentPdfUrl = URL.createObjectURL(pdf.output("blob"));
-      ui.download.href = currentPdfUrl;
+      currentPdfBlob = pdf.output("blob");
+      currentPdfUrl = URL.createObjectURL(currentPdfBlob);
       ui.download.hidden = false;
-      setStatus("PDF criado. Toque em “Baixar PDF” para salvar ou abrir.", "success");
+      setStatus("PDF criado. Toque em “Salvar PDF” para baixar ou compartilhar.", "success");
     } catch (error) {
       console.error(error);
       setStatus("Não foi possível criar o PDF. Tente usar imagens JPG ou PNG menores.", "error");
@@ -230,6 +232,37 @@
     }
   }
 
+  async function savePdf() {
+    if (!currentPdfBlob || !currentPdfUrl) return;
+    const filename = "photocards_frente_verso.pdf";
+
+    try {
+      const file = typeof File !== "undefined" ? new File([currentPdfBlob], filename, { type: "application/pdf" }) : null;
+      if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Photocards frente e verso",
+        });
+        setStatus("PDF compartilhado. No iPhone ou iPad, escolha “Salvar em Arquivos” para guardá-lo.", "success");
+        return;
+      }
+
+      const link = document.createElement("a");
+      link.href = currentPdfUrl;
+      link.download = filename;
+      link.rel = "noopener";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setStatus("Download iniciado. Se o PDF abrir na tela, use Compartilhar → Salvar em Arquivos.", "success");
+    } catch (error) {
+      if (error && error.name === "AbortError") return;
+      console.error(error);
+      setStatus("Não foi possível salvar automaticamente. Tente novamente e escolha “Salvar em Arquivos”.", "error");
+    }
+  }
+
   ui.generate.addEventListener("click", createPdf);
+  ui.download.addEventListener("click", savePdf);
   updateState();
 })();

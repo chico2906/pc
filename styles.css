@@ -80,6 +80,10 @@ button, input { font: inherit; }
 .generate-button:hover:not(:disabled) { background: var(--green-dark); transform: translateY(-1px); }
 .generate-button:disabled { cursor: not-allowed; opacity: .43; box-shadow: none; }
 .generate-button svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.download-button { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 160px; padding: 14px 18px; border: 1px solid var(--green); border-radius: 14px; color: var(--green); background: white; text-decoration: none; font-weight: 700; }
+.download-button:hover { color: white; background: var(--green); }
+.download-button[hidden] { display: none; }
+.download-button svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .status { min-height: 24px; margin: 13px 3px 0; color: var(--muted); font-size: .9rem; text-align: right; }
 .status.error { color: #a62c2c; }
 .status.success { color: var(--green); }
@@ -92,6 +96,7 @@ button, input { font: inherit; }
   .upload-card { min-height: 0; padding: 20px; }
   .action-panel { align-items: stretch; flex-direction: column; }
   .generate-button { width: 100%; min-width: 0; }
+  .download-button { width: 100%; }
   .status { text-align: left; }
   .print-tip { flex-direction: column; }
 }

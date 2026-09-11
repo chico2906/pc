@@ -25,8 +25,10 @@
       count: document.querySelector("#back-count"),
     },
     generate: document.querySelector("#generate"),
+    download: document.querySelector("#download"),
     status: document.querySelector("#status"),
   };
+  let currentPdfUrl = null;
 
   function setStatus(message, type = "") {
     ui.status.textContent = message;
@@ -34,6 +36,11 @@
   }
 
   function updateState() {
+    if (currentPdfUrl) {
+      URL.revokeObjectURL(currentPdfUrl);
+      currentPdfUrl = null;
+      ui.download.hidden = true;
+    }
     ["front", "back"].forEach((side) => {
       ui[side].count.textContent = `${state[side].length} / ${MAX_IMAGES}`;
       ui[side].preview.replaceChildren();
@@ -113,15 +120,26 @@
   async function makeCard(file) {
     const image = await loadImage(file);
     const canvas = document.createElement("canvas");
-    canvas.width = 1060;
-    canvas.height = 1680;
+    // Aproximadamente 300 dpi no tamanho final, com uso de memória seguro no iPad.
+    canvas.width = 636;
+    canvas.height = 1008;
     const ctx = canvas.getContext("2d");
-    const radius = 64;
+    const radius = 38;
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
-    ctx.roundRect(0, 0, canvas.width, canvas.height, radius);
+    // Caminho manual para funcionar também em versões antigas do Safari/iPadOS.
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(canvas.width - radius, 0);
+    ctx.quadraticCurveTo(canvas.width, 0, canvas.width, radius);
+    ctx.lineTo(canvas.width, canvas.height - radius);
+    ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - radius, canvas.height);
+    ctx.lineTo(radius, canvas.height);
+    ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
     ctx.clip();
 
     const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
@@ -147,6 +165,7 @@
       return;
     }
     ui.generate.disabled = true;
+    ui.download.hidden = true;
     ui.generate.querySelector("span").textContent = "Montando o PDF...";
     setStatus("Preparando as imagens. Isso pode levar alguns segundos.");
 
@@ -154,21 +173,24 @@
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
       pdf.setProperties({ title: "Photocards - frente e verso", creator: "Photocard Print" });
-      const fronts = await Promise.all(state.front.map((item) => makeCard(item.file)));
-      const backs = await Promise.all(state.back.map((item) => makeCard(item.file)));
-
-      fronts.forEach((data, index) => {
+      // Processamento sequencial evita o limite de memória do Safari no iPad.
+      for (let index = 0; index < state.front.length; index += 1) {
+        const data = await makeCard(state.front[index].file);
         const { x, y } = cardPosition(index, false);
         pdf.addImage(data, "JPEG", x, y, CARD_W, CARD_H, undefined, "FAST");
-      });
+      }
       pdf.addPage("a4", "portrait");
-      backs.forEach((data, index) => {
+      for (let index = 0; index < state.back.length; index += 1) {
+        const data = await makeCard(state.back[index].file);
         const { x, y } = cardPosition(index, true);
         pdf.addImage(data, "JPEG", x, y, CARD_W, CARD_H, undefined, "FAST");
-      });
+      }
 
-      pdf.save("photocards_frente_verso.pdf");
-      setStatus("PDF criado e baixado com sucesso.", "success");
+      if (currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
+      currentPdfUrl = URL.createObjectURL(pdf.output("blob"));
+      ui.download.href = currentPdfUrl;
+      ui.download.hidden = false;
+      setStatus("PDF criado. Toque em “Baixar PDF” para salvar ou abrir.", "success");
     } catch (error) {
       console.error(error);
       setStatus("Não foi possível criar o PDF. Tente usar imagens JPG ou PNG menores.", "error");

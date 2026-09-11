@@ -52,6 +52,15 @@ button, input { font: inherit; }
 .card-heading h2 { margin: 0; font: 700 1.18rem "Manrope", sans-serif; }
 .counter { padding: 6px 10px; border-radius: 9px; background: #edf2ef; color: var(--muted); font-size: .82rem; font-weight: 700; }
 
+.back-options { display: flex; flex-wrap: wrap; gap: 8px; margin: -2px 0 16px; padding: 0; border: 0; }
+.back-options legend { width: 100%; margin-bottom: 3px; color: var(--muted); font-size: .82rem; font-weight: 600; }
+.option-pill { cursor: pointer; }
+.option-pill input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.option-pill span { display: block; padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: #f8faf9; font-size: .8rem; font-weight: 700; transition: border-color .2s, color .2s, background .2s; }
+.option-pill input:checked + span { border-color: var(--green); color: var(--green-dark); background: var(--green-soft); }
+.option-pill input:focus-visible + span { outline: 3px solid rgba(23,107,74,.2); outline-offset: 2px; }
+.upload-card.no-back .drop-zone, .upload-card.no-back .preview-grid { display: none; }
+
 .drop-zone {
   display: flex; min-height: 170px; flex-direction: column; align-items: center; justify-content: center;
   border: 1.5px dashed #aec1b6; border-radius: 18px; background: #f8fbf9; cursor: pointer;

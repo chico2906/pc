@@ -237,8 +237,10 @@
     const filename = "photocards_frente_verso.pdf";
 
     try {
+      const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
       const file = typeof File !== "undefined" ? new File([currentPdfBlob], filename, { type: "application/pdf" }) : null;
-      if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      if (isMobileDevice && file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: "Photocards frente e verso",

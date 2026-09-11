@@ -6,6 +6,7 @@
   const PAGE_H = 297;
   const CARD_W = 53;
   const CARD_H = 84;
+  const BACK_BLEED = 2.5;
   const GAP = 5;
   const LEFT = 10;
   const TOP = 10;
@@ -139,12 +140,12 @@
     });
   }
 
-  async function makeCard(file) {
+  async function makeCard(file, canvasWidth = 636, canvasHeight = 1008) {
     const image = await loadImage(file);
     const canvas = document.createElement("canvas");
     // Aproximadamente 300 dpi no tamanho final, com uso de memória seguro no iPad.
-    canvas.width = 636;
-    canvas.height = 1008;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     const ctx = canvas.getContext("2d");
     const radius = 38;
 
@@ -204,16 +205,16 @@
       if (state.backMode !== "none") {
         pdf.addPage("a4", "portrait");
         if (state.backMode === "same") {
-          const data = await makeCard(state.back[0].file);
+          const data = await makeCard(state.back[0].file, 696, 1068);
           for (let index = 0; index < state.front.length; index += 1) {
             const { x, y } = cardPosition(index, true);
-            pdf.addImage(data, "JPEG", x, y, CARD_W, CARD_H, undefined, "FAST");
+            pdf.addImage(data, "JPEG", x - BACK_BLEED, y - BACK_BLEED, CARD_W + BACK_BLEED * 2, CARD_H + BACK_BLEED * 2, undefined, "FAST");
           }
         } else {
           for (let index = 0; index < state.back.length; index += 1) {
-            const data = await makeCard(state.back[index].file);
+            const data = await makeCard(state.back[index].file, 696, 1068);
             const { x, y } = cardPosition(index, true);
-            pdf.addImage(data, "JPEG", x, y, CARD_W, CARD_H, undefined, "FAST");
+            pdf.addImage(data, "JPEG", x - BACK_BLEED, y - BACK_BLEED, CARD_W + BACK_BLEED * 2, CARD_H + BACK_BLEED * 2, undefined, "FAST");
           }
         }
       }
